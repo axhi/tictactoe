@@ -1,3 +1,4 @@
+//game function that initialize an empty board as well as a status indicator
 function Game() {
   this.board = {
     col0: [0,0,0],
@@ -24,26 +25,35 @@ function Game() {
   $('.new').hide();
 }
 
+//This registers a move from the player
+  //loc = td that was clicked
+  //par = parent of td clicked
+  //spot = jquery object of location for printing 
 Game.prototype.move = function(loc,par,spot) {
   if (this.board['col'+loc][par] == 0) {
     this.board['col'+loc][par] = 1
     this.render(spot, "X");
+    // Enters area for computer move
     this.computerMove(loc, par);
   } else {
     alert('Sorry, try again!');
   }
 }
 
+//Renders to the board on screen
 Game.prototype.render = function(spot, player) {
   $(spot).html(player)
   $('.board').children('tbody').children('tr').children().each(function () {});
 }
 
+//Sets up computer move, and enters logic
 Game.prototype.computerMove = function(loc, par) {
   this.status = false;
   this.logic(loc,par);
 }
 
+//Outputs to screen when game is over
+  //dig is parameter to say if it was a win or tie; 0 is tie, 1 is win; 
 Game.prototype.over = function(dig) {
   if (dig == 0) {
     alert("Sorry, you lost. But then again, I'm pretty smart. Try again!");
@@ -53,15 +63,19 @@ Game.prototype.over = function(dig) {
   $('.reset').trigger('click');
 }
 
+//game over check, runs through columns, rows, and diagonals to see if there is a winner
 Game.prototype.gameOver = function() {
   var cols = [this.board.col0, this.board.col1, this.board.col2];
   var rows = [this.board.row0(), this.board.row1(), this.board.row2()];
   var diags = [this.board.diagR(), this.board.diagL()];
   var total = 0;
+
+  // this checks for tie game
   for (var i in cols) {
     total += (countElement(0, cols[i])); 
   }
   if (total == 0) {this.status = true; return this.over(1);}
+
   for (var i in cols) {
     if (sumNum(cols[i]) === -3) {
       this.status = true;
@@ -82,6 +96,12 @@ Game.prototype.gameOver = function() {
   }
 }
 
+//Runs game logic; checks to see if game is over
+  //if false, runs through logic scenarios
+    //If center is open, computer takes it
+    //If computer can win, wins
+    //if computer can block, blocks
+    //if computer can forks
 Game.prototype.logic = function(loc,par) {
  this.gameOver();
  if (this.status == false) {
@@ -93,6 +113,7 @@ Game.prototype.logic = function(loc,par) {
  }
 }
 
+//forkchecker runs through columns, board, and diagonals 
 Game.prototype.forkChecker = function() {
   var cols = [this.board.col0, this.board.col1, this.board.col2];
   var rows = [this.board.row0(), this.board.row1(), this.board.row2()];
@@ -101,19 +122,21 @@ Game.prototype.forkChecker = function() {
   var a = Math.round(Math.random()*2);
   var b = Math.round(Math.random()*2); 
   while (temp === false) {
+    //first check is columns; set empty column space to -1
     for (var i in cols) {
       for (var v in cols[i]) {
         if (cols[i][v] === 0) {
           cols[i][v] = -1;
+          //checks to see if opening that space creates a row/column combination to staisfy -2 to fork
           if (this.checkOkay(cols,rows,diags) === true) {
             this.findSpot(v,i);
             temp = true;
+            this.status = true;
             return;
           } else {cols[i][v] = 0;}
         }
       }
     }
-
     for (var i in rows) {
       for (var v in rows[i]) {
         if (rows[i] === 0) {
@@ -121,12 +144,12 @@ Game.prototype.forkChecker = function() {
           if (this.checkOkay(cols,rows,diags) === true) {
             this.findSpot(i,v);
             temp = true;
+            this.status = true;
             return;
           } else {rows[i][v] = 0;}
         }
       }
     }
-
     for (var i in diags) {
       for (var v in diags[i]) {
         if (diags[i] === 0) {
@@ -134,18 +157,20 @@ Game.prototype.forkChecker = function() {
           if (this.checkOkay(cols,rows,diags) === true) {
             this.findSpot(v,i);
             temp = true;
+            this.status = true;
             return;
           } else {diags[i][v] = 0;}
         }
       }
     }
-
+    //if no good fork option is available, goes anywhere
     if (eval('this.board.col' + a)[b] === 0) {
       this.findSpot(b,a);
       eval('this.board.col' + a)[b] = -1;
+      this.status = true;
       temp = true;
       return;
-    } 
+    } //to save computing power, a guess for open space is made first, then iteration happens if guess is off 
     else {
       for (var i in cols) {
         var a = cols[i].indexOf(0);
@@ -153,6 +178,7 @@ Game.prototype.forkChecker = function() {
           eval('this.board.col'+i)[a] = -1;
           this.findSpot(a, i);
           temp = true;
+          this.status = true;
           return;
         }
       }
@@ -173,6 +199,14 @@ Game.prototype.checkOkay = function(c,r,d) {
       if (sumNum(c[i]) + sumNum(d[g]) === -2) {
         temp = true;
         return temp; 
+      }
+    }
+  }
+  for (var aa in r) {
+    for (var bb in d) {
+      if (sumNum(r[aa]) + sumNum(d[bb]) === -2) {
+        temp = true;
+        return temp;
       }
     }
   }
