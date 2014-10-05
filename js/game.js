@@ -30,7 +30,7 @@ Game.prototype.move = function(loc,par,spot) {
     this.render(spot, "X");
     this.computerMove(loc, par);
   } else {
-    alert('already there');
+    alert('Sorry, try again!');
   }
 }
 
@@ -44,29 +44,139 @@ Game.prototype.computerMove = function(loc, par) {
   this.logic(loc,par);
 }
 
+Game.prototype.over = function(dig) {
+  if (dig == 0) {
+    alert("Sorry, you lost. But then again, I'm pretty smart. Try again!");
+  } else {
+    alert("Catch Scratch Fever! Try again!");
+  }
+  $('.reset').trigger('click');
+}
+
 Game.prototype.gameOver = function() {
   var cols = [this.board.col0, this.board.col1, this.board.col2];
   var rows = [this.board.row0(), this.board.row1(), this.board.row2()];
-  console.log('cols');
+  var diags = [this.board.diagR(), this.board.diagL()];
+  var total = 0;
   for (var i in cols) {
-    console.log(cols[i]);
+    total += (countElement(0, cols[i])); 
   }
-  console.log('rows');
+  if (total == 0) {this.status = true; return this.over(1);}
+  for (var i in cols) {
+    if (sumNum(cols[i]) === -3) {
+      this.status = true;
+      return this.over(0);
+    }
+  }
   for (var i in rows) {
-    console.log(rows[i]);
+    if (sumNum(rows[i]) === -3) {
+      this.status = true;
+      return this.over(0);
+    }
+  }
+  for (var i in diags) {
+    if (sumNum(diags[i]) === -3) {
+      this.status = true;
+      return this.over(0);
+    }
   }
 }
 
 Game.prototype.logic = function(loc,par) {
- if (this.status == false) { this.centerChecker(loc,par); }
- if (this.status == false) { this.winChecker(); }
- if (this.status == false) { this.blockChecker(); }
- if (this.status == false) { this.forkChecker(); }
  this.gameOver();
+ if (this.status == false) {
+  if (this.status == false) { this.centerChecker(loc,par); }
+  if (this.status == false) { this.winChecker(); }
+  if (this.status == false) { this.blockChecker(); }
+  if (this.status == false) { this.forkChecker(); }
+  this.gameOver();
+ }
 }
 
 Game.prototype.forkChecker = function() {
-  alert('workin here');
+  var cols = [this.board.col0, this.board.col1, this.board.col2];
+  var rows = [this.board.row0(), this.board.row1(), this.board.row2()];
+  var diags = [this.board.diagR(), this.board.diagL()];
+  var temp = false;
+  var a = Math.round(Math.random()*2);
+  var b = Math.round(Math.random()*2); 
+  while (temp === false) {
+    for (var i in cols) {
+      for (var v in cols[i]) {
+        if (cols[i][v] === 0) {
+          cols[i][v] = -1;
+          if (this.checkOkay(cols,rows,diags) === true) {
+            this.findSpot(v,i);
+            temp = true;
+            return;
+          } else {cols[i][v] = 0;}
+        }
+      }
+    }
+
+    for (var i in rows) {
+      for (var v in rows[i]) {
+        if (rows[i] === 0) {
+          rows[i] = -1;
+          if (this.checkOkay(cols,rows,diags) === true) {
+            this.findSpot(i,v);
+            temp = true;
+            return;
+          } else {rows[i][v] = 0;}
+        }
+      }
+    }
+
+    for (var i in diags) {
+      for (var v in diags[i]) {
+        if (diags[i] === 0) {
+          diags[i] = -1;
+          if (this.checkOkay(cols,rows,diags) === true) {
+            this.findSpot(v,i);
+            temp = true;
+            return;
+          } else {diags[i][v] = 0;}
+        }
+      }
+    }
+
+    if (eval('this.board.col' + a)[b] === 0) {
+      this.findSpot(b,a);
+      eval('this.board.col' + a)[b] = -1;
+      temp = true;
+      return;
+    } 
+    else {
+      for (var i in cols) {
+        var a = cols[i].indexOf(0);
+        if (a == 0) {
+          eval('this.board.col'+i)[a] = -1;
+          this.findSpot(a, i);
+          temp = true;
+          return;
+        }
+      }
+    }
+  }
+}
+
+Game.prototype.checkOkay = function(c,r,d) {
+  var temp = false;
+  for (var i in c) {
+    for (var a in r) {
+      if (sumNum(c[i]) + sumNum(r[a]) === -2) {
+        temp = true;
+        return temp; 
+      }
+    }
+    for (var g in d) {
+      if (sumNum(c[i]) + sumNum(d[g]) === -2) {
+        temp = true;
+        return temp; 
+      }
+    }
+  }
+  return temp;   
 }
 
 Game.prototype.findSpot = function(f,s) {
@@ -75,73 +185,93 @@ Game.prototype.findSpot = function(f,s) {
 }
 
 Game.prototype.winChecker = function() {
-  this.rowChecker(2);
-  this.colChecker(2);
-  this.diagChecker(2);
+  if (this.status === false) {this.rowChecker(-2);}
+  if (this.status === false) {this.colChecker(-2);}
+  if (this.status === false) {this.diagChecker(-2);}
 }
 
 Game.prototype.blockChecker = function() {
-  this.rowChecker(1);
-  this.colChecker(1);
-  this.diagChecker(1);
+  if (this.status === false) {this.rowChecker(2);}
+  if (this.status === false) {this.colChecker(2);}
+  if (this.status === false) {this.diagChecker(2);}
 }
 
 Game.prototype.centerChecker = function(loc,par) {
-  if (isCorner(loc,par) === true){
-    if (this.board.col1[1] === 0) {
-      this.board.col1[1] = 2;  
-      this.findSpot(1,1);
-      this.status = true;
-    } 
-  }
+  if (this.board.col1[1] === 0) {
+    this.board.col1[1] = -1;  
+    this.findSpot(1,1);
+    this.status = true;
+  } 
 }
 
 Game.prototype.diagChecker = function(dig) {
-  if (countElement(dig, this.board.diagL()) > 1) {
-    this.findSpot(0, this.board.diagL().indexOf(0));
-    this.board.diagL()[this.board.diagL().indexOf(0)] = 2;
+  if (sumNum(this.board.diagL()) === dig) {
+    var index = this.board.diagL().indexOf(0);
+    this.findSpot(index,index);
+    eval('this.board.col'+index)[index] = -1;
     this.status = true;
+    return;
   } 
-  else if (countElement(dig, this.board.diagR()) > 1) {
-    this.findSpot(this.board.diagR().indexOf(0), 2);
-    this.board.diagR()[this.board.diagR().indexOf(0)] = 2;
+  else if (sumNum(this.board.diagR()) === dig) {
+    var index = this.board.diagR().indexOf(0);
+    if (index == 1) {
+      this.findSpot(1,1);
+      this.board.col1[1] = -1;
+      return;
+    }
+    else if (index == 0) {
+      this.findSpot(0,2);
+      this.board.col2[0] = -1;
+      return;
+    } else {
+      this.findSpot(2,0);
+      this.board.col0[2] = -1;
+      return;
+    }
+    return;
     this.status = true;
   }
 }
 
 Game.prototype.rowChecker = function(dig) {
-  if (countElement(dig, this.board.row0()) > 1) {
+  if (sumNum(this.board.row0()) === dig) {
     this.findSpot(0, this.board.row0().indexOf(0));
-    this.board.row0()[this.board.row0().indexOf(0)] = 2;
+    eval('this.board.col' + this.board.row0().indexOf(0))[0] = -1;
     this.status = true;
+    return;
   }
-  else if (countElement(dig, this.board.row1()) > 1) {
+  else if (sumNum(this.board.row1()) === dig) {
     this.findSpot(1, this.board.row1().indexOf(0));
-    this.board.row1()[this.board.row0().indexOf(0)] = 2;
+    eval('this.board.col' + this.board.row1().indexOf(0))[1] = -1;
     this.status = true;
+    return;
   }
-  else if (countElement(dig, this.board.row2()) > 1) {
+  else if (sumNum(this.board.row2()) === dig) {
     this.findSpot(2, this.board.row2().indexOf(0));
-    this.board.row2()[this.board.row2().indexOf(0)] = 2;
+    eval('this.board.col' + this.board.row2().indexOf(0))[2] = -1;
     this.status = true;
+    return;
   }
 }
 
 Game.prototype.colChecker = function(dig) {
-  if (countElement(dig,this.board.col0) > 1) {
+  if (sumNum(this.board.col0) === dig) {
     this.findSpot(this.board.col0.indexOf(0), 0);
-    this.board.col0[this.board.col0.indexOf(0)] = 2;
+    this.board.col0[this.board.col0.indexOf(0)] = -1;
     this.status = true;
+    return;
   }
-  else if (countElement(dig,this.board.col1) > 1) {
+  else if (sumNum(this.board.col1) === dig) {
     this.findSpot(this.board.col1.indexOf(0), 1);
-    this.board.col1[this.board.col1.indexOf(0)] = 2;
+    this.board.col1[this.board.col1.indexOf(0)] = -1;
     this.status = true;
+    return;
   }
-  else if (countElement(dig,this.board.col2) > 1) {
+  else if (sumNum(this.board.col2) === dig) {
     this.findSpot(this.board.col2.indexOf(0), 2);
-    this.board.col2[this.board.col2.indexOf(0)] = 2;
+    this.board.col2[this.board.col2.indexOf(0)] = -1;
     this.status = true;
+    return;
   }
 }
 
@@ -155,6 +285,14 @@ function isCorner(loc, par) {
   } else {
     return true;
   }
+}
+
+function sumNum(array) {
+  var count=0;
+  for (var i=array.length; i--;) {
+    count+=array[i];
+  }
+  return count;
 }
 
 function countElement(item,array) {
