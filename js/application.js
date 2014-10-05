@@ -6,6 +6,7 @@ $( document ).ready(function() {
   });
   $('.new').on('click', function(event) {
     currentGame = new Game;
+    $('.reset').toggle();
   });
   $('.reset').on('click', function(event) {
     currentGame = new Game;

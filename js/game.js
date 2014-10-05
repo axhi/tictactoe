@@ -18,6 +18,9 @@ function Game() {
     },
     diagR: function() {
       return [this.col2[0], this.col1[1], this.col0[2]];
+    },
+    corners: function() {
+      return [this.col0[0], this.col0[2], this.col2[0], this.col2[2]];
     }
   };
   this.status = false;
@@ -129,10 +132,40 @@ Game.prototype.forkChecker = function() {
           cols[i][v] = -1;
           //checks to see if opening that space creates a row/column combination to staisfy -2 to fork
           if (this.checkOkay(cols,rows,diags) === true) {
-            this.findSpot(v,i);
-            temp = true;
-            this.status = true;
-            return;
+            // checks left diagonal for a single computer move 
+            if (sumNum(this.board.diagL()) === -1 && (countElement(0, this.board.corners()) > 1)) {
+              cols[i][v] = 0;
+              this.board.col1[0] = -1;
+              this.findSpot(0,1); 
+              temp = true;
+              this.status = true;
+              return;
+            } 
+            // checks right diagonal for presence of one player and one computer move
+            else if (sumNum(this.board.diagR()) === 1 && (countElement(0, this.board.corners()) < 1)) { 
+              cols[i][v] = 0;
+              this.board.col1[2] = -1;
+              this.findSpot(2,1); 
+              temp = true;
+              this.status = true;
+              return;
+            } 
+            // sets fork on odd case, bottom right
+            else if (countElement(0, this.board.corners()) === 2) {
+              cols[i][v] = 0;
+              this.board.col2[0] = -1;
+              this.findSpot(0,2); 
+              temp = true;
+              this.status = true;
+              return;
+            }
+            // sets the fork number if corner checks fail
+            else {
+              this.findSpot(v,i);
+              temp = true;
+              this.status = true;
+              return;
+            }
           } else {cols[i][v] = 0;}
         }
       }
@@ -141,6 +174,7 @@ Game.prototype.forkChecker = function() {
       for (var v in rows[i]) {
         if (rows[i] === 0) {
           rows[i] = -1;
+          // if row fork is availalb,e it takes it
           if (this.checkOkay(cols,rows,diags) === true) {
             this.findSpot(i,v);
             temp = true;
@@ -154,6 +188,7 @@ Game.prototype.forkChecker = function() {
       for (var v in diags[i]) {
         if (diags[i] === 0) {
           diags[i] = -1;
+          //if diagonal fork is available, computer takes it
           if (this.checkOkay(cols,rows,diags) === true) {
             this.findSpot(v,i);
             temp = true;
@@ -163,14 +198,22 @@ Game.prototype.forkChecker = function() {
         }
       }
     }
-    //if no good fork option is available, goes anywhere
-    if (eval('this.board.col' + a)[b] === 0) {
+    //if no good fork option is available
+      //if no corner has been taken, takes corner after fork fail
+    if (countElement(0, this.board.corners()) === 4) {
+      this.findSpot(0,0);
+      this.board.col0[0] = -1;
+      temp = true;
+      return;
+    }
+      //to save computing power, a guess for open space is made first, then iteration happens if guess is off 
+    else if (eval('this.board.col' + a)[b] === 0) {
       this.findSpot(b,a);
       eval('this.board.col' + a)[b] = -1;
       this.status = true;
       temp = true;
       return;
-    } //to save computing power, a guess for open space is made first, then iteration happens if guess is off 
+    } 
     else {
       for (var i in cols) {
         var a = cols[i].indexOf(0);
@@ -186,6 +229,7 @@ Game.prototype.forkChecker = function() {
   }
 }
 
+//checking sum in forks, if total between column, row, or diagonal (with added number) equals -2, the computer takes that move
 Game.prototype.checkOkay = function(c,r,d) {
   var temp = false;
   for (var i in c) {
@@ -212,24 +256,24 @@ Game.prototype.checkOkay = function(c,r,d) {
   }
   return temp;   
 }
-
+//jquery spot in HTML
 Game.prototype.findSpot = function(f,s) {
   var spot = $($.find('tr')[f]).children("#"+s); 
   this.render(spot, "O");
 }
-
+//looks through board for a winner
 Game.prototype.winChecker = function() {
   if (this.status === false) {this.rowChecker(-2);}
   if (this.status === false) {this.colChecker(-2);}
   if (this.status === false) {this.diagChecker(-2);}
 }
-
+//looks through board for a block move
 Game.prototype.blockChecker = function() {
   if (this.status === false) {this.rowChecker(2);}
   if (this.status === false) {this.colChecker(2);}
   if (this.status === false) {this.diagChecker(2);}
 }
-
+//takes center if it is available
 Game.prototype.centerChecker = function(loc,par) {
   if (this.board.col1[1] === 0) {
     this.board.col1[1] = -1;  
@@ -237,7 +281,8 @@ Game.prototype.centerChecker = function(loc,par) {
     this.status = true;
   } 
 }
-
+//checks through diagonal rows to see the sum creates a possible move
+  //dig is -2 for winning, +2 for blocking
 Game.prototype.diagChecker = function(dig) {
   if (sumNum(this.board.diagL()) === dig) {
     var index = this.board.diagL().indexOf(0);
@@ -251,22 +296,26 @@ Game.prototype.diagChecker = function(dig) {
     if (index == 1) {
       this.findSpot(1,1);
       this.board.col1[1] = -1;
+      this.status = true;
       return;
     }
     else if (index == 0) {
       this.findSpot(0,2);
       this.board.col2[0] = -1;
+      this.status = true;
       return;
     } else {
       this.findSpot(2,0);
       this.board.col0[2] = -1;
+      this.status = true;
       return;
     }
     return;
     this.status = true;
   }
 }
-
+//same logic as diag, looking for sum
+  //dig is sum parameter
 Game.prototype.rowChecker = function(dig) {
   if (sumNum(this.board.row0()) === dig) {
     this.findSpot(0, this.board.row0().indexOf(0));
@@ -287,7 +336,8 @@ Game.prototype.rowChecker = function(dig) {
     return;
   }
 }
-
+//same logic as diag, looking for sum
+  //dig is sum parameter
 Game.prototype.colChecker = function(dig) {
   if (sumNum(this.board.col0) === dig) {
     this.findSpot(this.board.col0.indexOf(0), 0);
@@ -308,7 +358,7 @@ Game.prototype.colChecker = function(dig) {
     return;
   }
 }
-
+//checks location to see if it is a corner spot
 function isCorner(loc, par) {
   var a = [loc,par]
   if (loc === "1") {
@@ -320,7 +370,7 @@ function isCorner(loc, par) {
     return true;
   }
 }
-
+//sum function used throughout
 function sumNum(array) {
   var count=0;
   for (var i=array.length; i--;) {
@@ -328,7 +378,7 @@ function sumNum(array) {
   }
   return count;
 }
-
+//count function used to look for items
 function countElement(item,array) {
   var count = 0;
   $.each(array, function(i,v) { if (v === item) count++; });
