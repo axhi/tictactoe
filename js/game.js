@@ -133,8 +133,8 @@ Game.prototype.forkChecker = function() {
           //checks to see if opening that space creates a row/column combination to staisfy -2 to fork
           if (this.checkOkay(cols,rows,diags) === true) {
             // checks left diagonal for a single computer move 
-            if (sumNum(this.board.diagL()) === -1 && (countElement(0, this.board.corners()) > 1)) {
-              cols[i][v] = 0;
+            cols[i][v] = 0;
+            if ((sumNum(this.board.diagL()) === -1) && (this.board.col1[0] === 0)) {
               this.board.col1[0] = -1;
               this.findSpot(0,1); 
               temp = true;
@@ -142,8 +142,7 @@ Game.prototype.forkChecker = function() {
               return;
             } 
             // checks right diagonal for presence of one player and one computer move
-            else if (sumNum(this.board.diagR()) === 1 && (countElement(0, this.board.corners()) < 1)) { 
-              cols[i][v] = 0;
+            else if ((sumNum(this.board.diagR()) === -1) && (this.board.col1[0] === 0)) { 
               this.board.col1[2] = -1;
               this.findSpot(2,1); 
               temp = true;
@@ -152,7 +151,6 @@ Game.prototype.forkChecker = function() {
             } 
             // sets fork on odd case, bottom right
             else if (countElement(0, this.board.corners()) === 2) {
-              cols[i][v] = 0;
               this.board.col2[0] = -1;
               this.findSpot(0,2); 
               temp = true;
@@ -160,7 +158,15 @@ Game.prototype.forkChecker = function() {
               return;
             }
             // sets the fork number if corner checks fail
+            else if (countElement(0, this.board.corners()) === 4) {
+              cols[0][2] = -1;
+              this.findSpot(2,0);
+              temp = true;
+              this.status = true;
+              return; 
+            }
             else {
+              cols[i][v] = -1;
               this.findSpot(v,i);
               temp = true;
               this.status = true;
