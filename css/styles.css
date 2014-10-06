@@ -62,6 +62,7 @@ p {
   color: black;
   cursor: pointer;
   height: 110px;
+  width: 65px;
 }
 .board td:hover {
   background:yellow;
