@@ -55,13 +55,13 @@ p {
   padding-bottom: 10px;
 }
 .board td {
-  width: 82px;
   border: 1px dotted grey;
   text-align: center;
   font-family: sans-serif;
   font-size: 5.2em;
   color: black;
   cursor: pointer;
+  height: 110px;
 }
 .board td:hover {
   background:yellow;
