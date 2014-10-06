@@ -39,7 +39,10 @@ Game.prototype.move = function(loc,par,spot) {
     // Enters area for computer move
     this.computerMove(loc, par);
   } else {
-    alert('Sorry, try again!');
+    $('.alerts').prepend("Sorry, that space is occupied!");
+    $('.alerts').fadeTo(2000, 100).slideUp(500, function() {
+      $('.alerts').empty();
+    });
   }
 }
 
@@ -59,11 +62,18 @@ Game.prototype.computerMove = function(loc, par) {
   //dig is parameter to say if it was a win or tie; 0 is tie, 1 is win; 
 Game.prototype.over = function(dig) {
   if (dig == 0) {
-    alert("Sorry, you lost. But then again, I'm pretty smart. Try again!");
+    $('.alerts').prepend("Sorry, you lost. But then again, I'm pretty smart. Try again!");
+    $('.alerts').fadeTo(2000, 100).slideUp(500, function() {
+      $('.alerts').empty();
+      $('.reset').trigger('click');
+    });
   } else {
-    alert("Catch Scratch Fever! Try again!");
+    $('.alerts').prepend("Catch Scratch Fever! Try again!");
+    $('.alerts').fadeTo(2000, 100).slideUp(500, function() {
+      $('.alerts').empty();
+      $('.reset').trigger('click');
+    });
   }
-  $('.reset').trigger('click');
 }
 
 //game over check, runs through columns, rows, and diagonals to see if there is a winner
@@ -134,7 +144,7 @@ Game.prototype.forkChecker = function() {
           if (this.checkOkay(cols,rows,diags) === true) {
             // checks left diagonal for a single computer move 
             cols[i][v] = 0;
-            if ((sumNum(this.board.diagL()) === -1) && (this.board.col1[0] === 0)) {
+            if ((sumNum(this.board.diagL()) === -1) && (countElement(1, this.board.corners()) > 1) && this.board.col1[0] === 0) {
               this.board.col1[0] = -1;
               this.findSpot(0,1); 
               temp = true;
@@ -142,7 +152,7 @@ Game.prototype.forkChecker = function() {
               return;
             } 
             // checks right diagonal for presence of one player and one computer move
-            else if ((sumNum(this.board.diagR()) === -1) && (this.board.col1[0] === 0)) { 
+            else if ((sumNum(this.board.diagR()) === -1) && (sumNum(this.board.corners()) > 1)) { 
               this.board.col1[2] = -1;
               this.findSpot(2,1); 
               temp = true;
@@ -150,7 +160,7 @@ Game.prototype.forkChecker = function() {
               return;
             } 
             // sets fork on odd case, bottom right
-            else if (countElement(0, this.board.corners()) === 2) {
+            else if ((countElement(0, this.board.corners()) === 2) && (countElement(1, this.board.row0()) < 2) && this.board.col2[0] === 0) {
               this.board.col2[0] = -1;
               this.findSpot(0,2); 
               temp = true;
@@ -166,8 +176,14 @@ Game.prototype.forkChecker = function() {
               return; 
             }
             else {
-              cols[i][v] = -1;
-              this.findSpot(v,i);
+              if ((countElement(1, this.board.corners()) === 1) && (this.board.col2[1] === 1) ) {
+                cols[2][2] = -1;
+                this.findSpot(2,2);
+              }
+              else {
+                cols[i][v] = -1;
+                this.findSpot(v,i);
+              }
               temp = true;
               this.status = true;
               return;
